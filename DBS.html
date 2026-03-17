@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Ball Super — Power Beyond Gods</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f5c518;
+    --gold2: #ff9500;
+    --red: #e8001d;
+    --blue: #0094ff;
+    --silver: #c0c8d8;
+    --divine: #b8d4ff;
+    --bg: #06060e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #fff;
+  }
+
+  /* ─── PARTICLES ─── */
+  #particles {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: relative; z-index: 10;
+    text-align: center; padding: 40px 20px 20px;
+  }
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 6vw, 72px);
+    font-weight: 900;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, #f5c518 0%, #ff6600 40%, #ff0040 80%, #aa00ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 30px #f5c51880);
+  }
+  .logo-sub {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(12px, 2vw, 20px);
+    letter-spacing: 12px;
+    color: rgba(255,255,255,0.35);
+    margin-top: 6px;
+  }
+
+  /* ─── CHARACTER SELECTOR ─── */
+  .selector-section {
+    position: relative; z-index: 10;
+    text-align: center; padding: 20px 20px 0;
+  }
+  .selector-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 8px;
+    color: rgba(255,255,255,0.4); margin-bottom: 18px;
+  }
+  .character-cards {
+    display: inline-flex; gap: 24px;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .char-card {
+    cursor: pointer;
+    width: 130px; height: 170px;
+    border-radius: 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(10px);
+    position: relative; overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.23,1,0.32,1);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding-bottom: 14px;
+  }
+  .char-card::before {
+    content: ''; position: absolute; inset: 0;
+    opacity: 0; transition: opacity 0.4s;
+    border-radius: 14px;
+  }
+  .char-card[data-char="goku"]::before {
+    background: radial-gradient(ellipse at bottom, #f5c51840 0%, transparent 70%);
+  }
+  .char-card[data-char="vegeta"]::before {
+    background: radial-gradient(ellipse at bottom, #0094ff40 0%, transparent 70%);
+  }
+  .char-card:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.3); }
+  .char-card:hover::before { opacity: 1; }
+  .char-card.active {
+    border-color: var(--gold);
+    box-shadow: 0 0 30px rgba(245,197,24,0.4), 0 0 60px rgba(245,197,24,0.15);
+    transform: translateY(-8px);
+  }
+  .char-card.active::before { opacity: 1; }
+  .char-card[data-char="vegeta"].active {
+    border-color: #0094ff;
+    box-shadow: 0 0 30px rgba(0,148,255,0.4), 0 0 60px rgba(0,148,255,0.15);
+  }
+  .char-thumb {
+    width: 90px; height: 110px;
+    object-fit: contain;
+    object-position: center top;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+    transition: transform 0.4s;
+    position: absolute; top: 6px;
+  }
+  .char-card:hover .char-thumb, .char-card.active .char-thumb {
+    transform: scale(1.06) translateY(-4px);
+  }
+  .char-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 4px;
+    position: relative; z-index: 2;
+  }
+  .char-card[data-char="goku"] .char-name { color: var(--gold); }
+  .char-card[data-char="vegeta"] .char-name { color: #5ad4ff; }
+  .char-title {
+    font-size: 10px; letter-spacing: 2px;
+    color: rgba(255,255,255,0.35); margin-top: 2px;
+  }
+
+  /* ─── STAGE ─── */
+  .stage-wrapper {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center; align-items: center;
+    padding: 30px 20px 0;
+    min-height: 520px;
+  }
+  .stage {
+    position: relative;
+    width: 500px; max-width: 96vw;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  /* aura rings */
+  .aura-ring {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: all 0.8s cubic-bezier(0.23,1,0.32,1);
+    opacity: 0;
+  }
+  .aura-ring-1 {
+    width: 320px; height: 320px;
+    top: 50%; left: 50%; transform: translate(-50%,-40%);
+  }
+  .aura-ring-2 {
+    width: 240px; height: 240px;
+    top: 50%; left: 50%; transform: translate(-50%,-35%);
+  }
+  .aura-ring-3 {
+    width: 160px; height: 160px;
+    top: 50%; left: 50%; transform: translate(-50%,-30%);
+  }
+
+  /* ground glow */
+  .ground-glow {
+    position: absolute;
+    bottom: 80px; left: 50%; transform: translateX(-50%);
+    width: 300px; height: 60px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.23,1,0.32,1);
+    pointer-events: none;
+  }
+
+  /* character image */
+  .char-display {
+    position: relative; z-index: 5;
+    width: 100%; display: flex;
+    justify-content: center; align-items: flex-end;
+    min-height: 420px;
+  }
+  .char-img {
+    height: 420px; max-width: 340px;
+    object-fit: contain;
+    object-position: center bottom;
+    transition: all 0.15s ease;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+    position: relative; z-index: 5;
+  }
+  .char-img.flash-out {
+    opacity: 0; transform: scale(1.05) brightness(5);
+    filter: blur(4px) brightness(8) drop-shadow(0 0 40px white);
+  }
+  .char-img.flash-in {
+    animation: flashIn 0.6s cubic-bezier(0.23,1,0.32,1) forwards;
+  }
+  @keyframes flashIn {
+    0% { opacity: 0; transform: scale(0.85) translateY(30px); filter: brightness(4) drop-shadow(0 0 60px white); }
+    60% { opacity: 1; transform: scale(1.04) translateY(-6px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* electric sparks */
+  .sparks-canvas {
+    position: absolute; inset: 0; pointer-events: none; z-index: 8;
+    opacity: 0; transition: opacity 0.5s;
+  }
+
+  /* ─── FORM INFO ─── */
+  .form-info {
+    position: relative; z-index: 10;
+    text-align: center; padding: 10px 20px 0;
+    min-height: 80px;
+  }
+  .form-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(24px, 5vw, 52px);
+    letter-spacing: 6px;
+    transition: all 0.5s ease;
+    line-height: 1;
+  }
+  .form-desc {
+    font-size: 13px; letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 6px; transition: all 0.5s ease;
+  }
+  .power-bar-wrap {
+    margin: 12px auto 0;
+    width: 280px; max-width: 90vw;
+  }
+  .power-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; letter-spacing: 2px;
+    color: rgba(255,255,255,0.3); margin-bottom: 5px;
+  }
+  .power-bar-bg {
+    height: 4px; background: rgba(255,255,255,0.07);
+    border-radius: 2px; overflow: hidden;
+  }
+  .power-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 1s cubic-bezier(0.23,1,0.32,1), background 0.8s;
+  }
+
+  /* ─── TRANSFORM BUTTON ─── */
+  .btn-section {
+    position: relative; z-index: 10;
+    text-align: center; padding: 24px 20px 40px;
+  }
+  .transform-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 8px;
+    padding: 16px 52px;
+    border: none; border-radius: 4px;
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
+    background: linear-gradient(135deg, #f5c518, #ff6600);
+    color: #000;
+    box-shadow: 0 0 30px rgba(245,197,24,0.4), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .transform-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .transform-btn:hover { transform: scale(1.06) translateY(-2px); }
+  .transform-btn:hover::before { opacity: 1; }
+  .transform-btn:active { transform: scale(0.97); }
+  .transform-btn.vegeta-btn {
+    background: linear-gradient(135deg, #0094ff, #004fa3);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(0,148,255,0.4), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .transform-btn.max-btn {
+    background: linear-gradient(135deg, #c0c8d8, #8899bb);
+    box-shadow: 0 0 30px rgba(192,200,216,0.5), 0 8px 32px rgba(0,0,0,0.4);
+    animation: divinePulse 2s ease-in-out infinite;
+  }
+  @keyframes divinePulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(192,200,216,0.5), 0 8px 32px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 60px rgba(192,200,216,0.9), 0 0 100px rgba(192,200,216,0.3), 0 8px 32px rgba(0,0,0,0.4); }
+  }
+
+  /* ─── FORM DOTS ─── */
+  .form-dots {
+    display: flex; gap: 10px; justify-content: center;
+    margin-top: 10px;
+  }
+  .form-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: all 0.4s;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .form-dot.active {
+    width: 24px; border-radius: 4px;
+  }
+
+  /* ─── LIGHTNING FLASH OVERLAY ─── */
+  .flash-overlay {
+    position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    opacity: 0;
+  }
+  .flash-overlay.flash-active {
+    animation: screenFlash 0.5s ease-out forwards;
+  }
+  @keyframes screenFlash {
+    0% { opacity: 0; }
+    15% { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
+
+  /* ─── SCROLL AURA ─── */
+  .aura-particles {
+    position: absolute;
+    pointer-events: none; z-index: 6;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 400px; height: 500px;
+    opacity: 0;
+    transition: opacity 0.8s;
+  }
+
+  /* placeholder styling if image fails */
+  .char-img[src=""], .char-img:not([src]) {
+    display: none;
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 500px) {
+    .char-img { height: 320px; }
+    .stage-wrapper { min-height: 400px; }
+    .aura-ring-1 { width: 240px; height: 240px; }
+    .aura-ring-2 { width: 180px; height: 180px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Particle canvas -->
+<canvas id="particles"></canvas>
+
+<!-- Flash overlay -->
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<header>
+  <div class="logo-text">DRAGON BALL SUPER</div>
+  <div class="logo-sub">Power Beyond Gods</div>
+</header>
+
+<!-- Character Selection -->
+<section class="selector-section">
+  <div class="selector-label">— Choose Your Warrior —</div>
+  <div class="character-cards">
+    <div class="char-card active" data-char="goku" onclick="selectCharacter('goku')">
+      <img class="char-thumb"
+        src="https://static.wikia.nocookie.net/dragonball/images/5/5b/GokuDB_Super.png/revision/latest/scale-to-width-down/120?cb=20150807171533"
+        onerror="this.src='https://www.pngall.com/wp-content/uploads/2/Goku-PNG-Free-Download.png'"
+        alt="Goku">
+      <div class="char-name">GOKU</div>
+      <div class="char-title">SON GOKU · KAKAROT</div>
+    </div>
+    <div class="char-card" data-char="vegeta" onclick="selectCharacter('vegeta')">
+      <img class="char-thumb"
+        src="https://static.wikia.nocookie.net/dragonball/images/8/8e/VegetaDB_Super.png/revision/latest/scale-to-width-down/120?cb=20150807192638"
+        onerror="this.src='https://www.pngall.com/wp-content/uploads/2/Vegeta-Free-Download-PNG.png'"
+        alt="Vegeta">
+      <div class="char-name">VEGETA</div>
+      <div class="char-title">PRINCE OF ALL SAIYANS</div>
+    </div>
+  </div>
+</section>
+
+<!-- Stage -->
+<div class="stage-wrapper">
+  <div class="stage" id="stage">
+    <!-- Aura rings -->
+    <div class="aura-ring aura-ring-1" id="ring1"></div>
+    <div class="aura-ring aura-ring-2" id="ring2"></div>
+    <div class="aura-ring aura-ring-3" id="ring3"></div>
+    <div class="ground-glow" id="groundGlow"></div>
+
+    <!-- Aura particles SVG -->
+    <svg class="aura-particles" id="auraParticles" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- lines animated via JS -->
+    </svg>
+
+    <!-- Character Display -->
+    <div class="char-display">
+      <img class="char-img flash-in" id="charImg"
+        src="https://static.wikia.nocookie.net/dragonball/images/5/5b/GokuDB_Super.png/revision/latest/scale-to-width-down/400?cb=20150807171533"
+        alt="Character"
+        onerror="this.src='https://i.imgur.com/8J7FX9L.png'">
+    </div>
+    <canvas class="sparks-canvas" id="sparksCanvas"></canvas>
+  </div>
+</div>
+
+<!-- Form Info -->
+<div class="form-info">
+  <div class="form-name" id="formName">BASE FORM</div>
+  <div class="form-desc" id="formDesc">THE LEGEND BEGINS</div>
+  <div class="power-bar-wrap">
+    <div class="power-bar-label">
+      <span>POWER LEVEL</span>
+      <span id="powerVal">BASE</span>
+    </div>
+    <div class="power-bar-bg">
+      <div class="power-bar-fill" id="powerFill" style="width:8%;background:linear-gradient(90deg,#888,#ccc)"></div>
+    </div>
+  </div>
+  <div class="form-dots" id="formDots"></div>
+</div>
+
+<!-- Transform Button -->
+<div class="btn-section">
+  <button class="transform-btn" id="transformBtn" onclick="transform()">
+    ⚡ TRANSFORM ⚡
+  </button>
+  <div style="margin-top:10px;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.2)" id="nextFormHint"></div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────
+const CHARS = {
+  goku: {
+    thumb: 'https://static.wikia.nocookie.net/dragonball/images/5/5b/GokuDB_Super.png/revision/latest/scale-to-width-down/120?cb=20150807171533',
+    thumbFallback: 'https://www.pngall.com/wp-content/uploads/2/Goku-PNG-Free-Download.png',
+    forms: [
+      {
+        name: 'BASE FORM',
+        desc: 'THE LEGEND BEGINS',
+        power: 8,
+        powerLabel: 'BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/5/5b/GokuDB_Super.png/revision/latest/scale-to-width-down/450?cb=20150807171533',
+        imgFallback: 'https://upload.wikimedia.org/wikipedia/en/0/00/Son_Goku_DB_Super.png',
+        aura: { r: '#aaa', flash: 'rgba(255,255,255,0.9)', ring: 'rgba(220,220,220,0.15)', ground: 'rgba(255,255,255,0.08)' },
+        glow: 'drop-shadow(0 0 0px transparent)',
+        dotColor: '#ccc'
+      },
+      {
+        name: 'SUPER SAIYAN',
+        desc: 'THE LEGENDARY WARRIOR AWAKENS',
+        power: 22,
+        powerLabel: '50× BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/9/9b/Goku_Super_Saiyan_DBS.png/revision/latest/scale-to-width-down/450?cb=20181013151659',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/9/9b/Goku_Super_Saiyan_DBS.png/revision/latest',
+        aura: { r: '#f5c518', flash: 'rgba(255,220,0,0.95)', ring: 'rgba(245,197,24,0.3)', ground: 'rgba(245,197,24,0.2)' },
+        glow: 'drop-shadow(0 0 20px #f5c518) drop-shadow(0 0 40px #ff9500)',
+        dotColor: '#f5c518'
+      },
+      {
+        name: 'SUPER SAIYAN 2',
+        desc: 'LIGHTNING SURGES THROUGH HIM',
+        power: 40,
+        powerLabel: '100× BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/a/a2/Goku_SSJ2.png/revision/latest/scale-to-width-down/450?cb=20130706205445',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/a/a2/Goku_SSJ2.png/revision/latest',
+        aura: { r: '#ffe040', flash: 'rgba(255,230,40,0.95)', ring: 'rgba(255,220,0,0.35)', ground: 'rgba(255,220,0,0.25)' },
+        glow: 'drop-shadow(0 0 20px #ffe040) drop-shadow(0 0 50px #f5c518)',
+        dotColor: '#ffe040',
+        sparks: true
+      },
+      {
+        name: 'SUPER SAIYAN 3',
+        desc: 'THE EARTH TREMBLES BEFORE HIM',
+        power: 58,
+        powerLabel: '400× BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/9/9f/GokuSSj3.png/revision/latest/scale-to-width-down/450?cb=20100806073629',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/9/9f/GokuSSj3.png/revision/latest',
+        aura: { r: '#ffcc00', flash: 'rgba(255,210,0,0.95)', ring: 'rgba(255,200,0,0.4)', ground: 'rgba(255,180,0,0.3)' },
+        glow: 'drop-shadow(0 0 25px #ffcc00) drop-shadow(0 0 60px #ff9900) drop-shadow(0 0 100px #ff6600)',
+        dotColor: '#ffcc00',
+        sparks: true
+      },
+      {
+        name: 'SUPER SAIYAN GOD',
+        desc: 'DIVINE KI FLOWS WITHIN HIM',
+        power: 72,
+        powerLabel: 'GODLY KI',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/8/8e/Goku_Super_Saiyan_God_DBS.png/revision/latest/scale-to-width-down/450?cb=20200330033553',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/8/8e/Goku_Super_Saiyan_God_DBS.png/revision/latest',
+        aura: { r: '#ff1a1a', flash: 'rgba(255,60,30,0.95)', ring: 'rgba(220,0,0,0.4)', ground: 'rgba(200,0,0,0.25)' },
+        glow: 'drop-shadow(0 0 20px #ff2200) drop-shadow(0 0 50px #cc0000) drop-shadow(0 0 80px #880000)',
+        dotColor: '#ff4400'
+      },
+      {
+        name: 'SUPER SAIYAN BLUE',
+        desc: 'GODLY POWER PERFECTED',
+        power: 86,
+        powerLabel: 'BEYOND GODS',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/2/29/Goku_SSGSS_Render.png/revision/latest/scale-to-width-down/450?cb=20181012161203',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/2/29/Goku_SSGSS_Render.png/revision/latest',
+        aura: { r: '#0094ff', flash: 'rgba(0,160,255,0.95)', ring: 'rgba(0,148,255,0.4)', ground: 'rgba(0,100,255,0.25)' },
+        glow: 'drop-shadow(0 0 20px #0094ff) drop-shadow(0 0 50px #0055cc) drop-shadow(0 0 80px #003399)',
+        dotColor: '#0094ff'
+      },
+      {
+        name: 'ULTRA INSTINCT',
+        desc: "SURPASSING THE GODS OF DESTRUCTION",
+        power: 100,
+        powerLabel: '∞ DIVINE',
+        img: 'https://static.wikia.nocookie.net/dragonballfighterz/images/5/58/Goku_(Ultra_Instinct)_Artwork.png/revision/latest/scale-to-width-down/450?cb=20200508233232',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonballfighterz/images/5/58/Goku_(Ultra_Instinct)_Artwork.png/revision/latest',
+        aura: { r: '#c0c8d8', flash: 'rgba(230,240,255,0.98)', ring: 'rgba(192,200,216,0.45)', ground: 'rgba(180,200,255,0.3)' },
+        glow: 'drop-shadow(0 0 20px #c0c8d8) drop-shadow(0 0 50px #8899cc) drop-shadow(0 0 100px #aabbff)',
+        dotColor: '#c0c8d8',
+        divine: true
+      }
+    ]
+  },
+  vegeta: {
+    thumb: 'https://static.wikia.nocookie.net/dragonball/images/8/8e/VegetaDB_Super.png/revision/latest/scale-to-width-down/120?cb=20150807192638',
+    thumbFallback: 'https://www.pngall.com/wp-content/uploads/2/Vegeta-Free-Download-PNG.png',
+    forms: [
+      {
+        name: 'BASE FORM',
+        desc: 'PRINCE OF ALL SAIYANS',
+        power: 8,
+        powerLabel: 'BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/8/8e/VegetaDB_Super.png/revision/latest/scale-to-width-down/450?cb=20150807192638',
+        imgFallback: 'https://www.pngall.com/wp-content/uploads/2/Vegeta-Free-Download-PNG.png',
+        aura: { r: '#aaa', flash: 'rgba(255,255,255,0.9)', ring: 'rgba(220,220,220,0.15)', ground: 'rgba(255,255,255,0.08)' },
+        glow: 'drop-shadow(0 0 0px transparent)',
+        dotColor: '#ccc'
+      },
+      {
+        name: 'SUPER SAIYAN',
+        desc: "THE PRINCE'S PRIDE ERUPTS",
+        power: 22,
+        powerLabel: '50× BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/5/5e/Vegeta-super-saiyan-dbs.png/revision/latest/scale-to-width-down/450?cb=20160225024630',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/5/5e/Vegeta-super-saiyan-dbs.png/revision/latest',
+        aura: { r: '#f5c518', flash: 'rgba(255,220,0,0.95)', ring: 'rgba(245,197,24,0.3)', ground: 'rgba(245,197,24,0.2)' },
+        glow: 'drop-shadow(0 0 20px #f5c518) drop-shadow(0 0 40px #ff9500)',
+        dotColor: '#f5c518'
+      },
+      {
+        name: 'SUPER SAIYAN 2',
+        desc: 'MAJIN POWER UNCHAINED',
+        power: 40,
+        powerLabel: '100× BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/4/4e/SSJ2_Vegeta_(Majin).png/revision/latest/scale-to-width-down/450?cb=20120503012953',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/4/4e/SSJ2_Vegeta_(Majin).png/revision/latest',
+        aura: { r: '#ffe040', flash: 'rgba(255,230,40,0.95)', ring: 'rgba(255,220,0,0.35)', ground: 'rgba(255,220,0,0.25)' },
+        glow: 'drop-shadow(0 0 20px #ffe040) drop-shadow(0 0 50px #f5c518)',
+        dotColor: '#ffe040',
+        sparks: true
+      },
+      {
+        name: 'SUPER SAIYAN 3',
+        desc: 'SURPASSING HIS OWN LIMITS',
+        power: 58,
+        powerLabel: '400× BASE',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/d/d9/Vegeta_SSJ3_Raging_Blast.png/revision/latest/scale-to-width-down/450?cb=20120503162217',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/d/d9/Vegeta_SSJ3_Raging_Blast.png/revision/latest',
+        aura: { r: '#ffcc00', flash: 'rgba(255,210,0,0.95)', ring: 'rgba(255,200,0,0.4)', ground: 'rgba(255,180,0,0.3)' },
+        glow: 'drop-shadow(0 0 25px #ffcc00) drop-shadow(0 0 60px #ff9900) drop-shadow(0 0 100px #ff6600)',
+        dotColor: '#ffcc00',
+        sparks: true
+      },
+      {
+        name: 'SUPER SAIYAN GOD',
+        desc: 'BORN FROM THE BLOOD OF GODS',
+        power: 72,
+        powerLabel: 'GODLY KI',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/a/ae/Vegeta_SSG.png/revision/latest/scale-to-width-down/450?cb=20180617044318',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/a/ae/Vegeta_SSG.png/revision/latest',
+        aura: { r: '#ff2200', flash: 'rgba(255,60,30,0.95)', ring: 'rgba(220,0,0,0.4)', ground: 'rgba(200,0,0,0.25)' },
+        glow: 'drop-shadow(0 0 20px #ff2200) drop-shadow(0 0 50px #cc0000) drop-shadow(0 0 80px #880000)',
+        dotColor: '#ff4400'
+      },
+      {
+        name: 'SUPER SAIYAN BLUE',
+        desc: 'ROYAL BLUE DEVASTATION',
+        power: 86,
+        powerLabel: 'BEYOND GODS',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/f/fd/Vegeta_Super_Saiyan_Blue_DBS_ch.png/revision/latest/scale-to-width-down/450?cb=20180618145239',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/f/fd/Vegeta_Super_Saiyan_Blue_DBS_ch.png/revision/latest',
+        aura: { r: '#0094ff', flash: 'rgba(0,160,255,0.95)', ring: 'rgba(0,148,255,0.4)', ground: 'rgba(0,100,255,0.25)' },
+        glow: 'drop-shadow(0 0 20px #0094ff) drop-shadow(0 0 50px #0055cc) drop-shadow(0 0 80px #003399)',
+        dotColor: '#0094ff'
+      },
+      {
+        name: 'ULTRA EGO',
+        desc: 'THE DESTRUCTION GOD WITHIN',
+        power: 100,
+        powerLabel: '∞ ULTRA EGO',
+        img: 'https://static.wikia.nocookie.net/dragonball/images/5/56/Vegeta_Ultra_Ego.png/revision/latest/scale-to-width-down/450?cb=20211022165134',
+        imgFallback: 'https://static.wikia.nocookie.net/dragonball/images/5/56/Vegeta_Ultra_Ego.png/revision/latest',
+        aura: { r: '#aa00ff', flash: 'rgba(180,0,255,0.95)', ring: 'rgba(150,0,200,0.45)', ground: 'rgba(120,0,180,0.3)' },
+        glow: 'drop-shadow(0 0 20px #aa00ff) drop-shadow(0 0 50px #7700bb) drop-shadow(0 0 100px #440088)',
+        dotColor: '#aa00ff',
+        divine: true
+      }
+    ]
+  }
+};
+
+let currentChar = 'goku';
+let currentForm = 0;
+let transforming = false;
+
+// ─── INIT ────────────────────────────────────────────────────
+function init() {
+  buildDots();
+  updateDisplay(false);
+  initParticles();
+  initSparks();
+}
+
+function buildDots() {
+  const wrap = document.getElementById('formDots');
+  const forms = CHARS[currentChar].forms;
+  wrap.innerHTML = '';
+  forms.forEach((f, i) => {
+    const d = document.createElement('div');
+    d.className = 'form-dot' + (i === currentForm ? ' active' : '');
+    d.style.background = i <= currentForm ? f.dotColor : 'rgba(255,255,255,0.12)';
+    d.style.boxShadow = i === currentForm ? `0 0 8px ${f.dotColor}` : 'none';
+    d.style.borderColor = i <= currentForm ? f.dotColor + '44' : 'rgba(255,255,255,0.1)';
+    wrap.appendChild(d);
+  });
+}
+
+function updateDisplay(animate = true) {
+  const char = CHARS[currentChar];
+  const form = char.forms[currentForm];
+
+  // image
+  const img = document.getElementById('charImg');
+  img.src = form.img;
+  img.onerror = () => { img.src = form.imgFallback; };
+  img.style.filter = form.glow;
+
+  // aura rings
+  const ring1 = document.getElementById('ring1');
+  const ring2 = document.getElementById('ring2');
+  const ring3 = document.getElementById('ring3');
+  const ground = document.getElementById('groundGlow');
+
+  if (currentForm > 0) {
+    ring1.style.opacity = '1';
+    ring2.style.opacity = '0.7';
+    ring3.style.opacity = '0.5';
+    ground.style.opacity = '1';
+    ring1.style.boxShadow = `0 0 60px 20px ${form.aura.ring}, inset 0 0 40px ${form.aura.ring}`;
+    ring2.style.boxShadow = `0 0 40px 15px ${form.aura.ring}`;
+    ring3.style.boxShadow = `0 0 25px 10px ${form.aura.ring}`;
+    ground.style.background = `radial-gradient(ellipse at center, ${form.aura.ground} 0%, transparent 70%)`;
+    ground.style.boxShadow = `0 0 40px 20px ${form.aura.ground}`;
+    document.getElementById('auraParticles').style.opacity = currentForm >= 3 ? '1' : '0.5';
+    updateAuraParticles(form.aura.r);
+  } else {
+    ring1.style.opacity = '0';
+    ring2.style.opacity = '0';
+    ring3.style.opacity = '0';
+    ground.style.opacity = '0';
+    document.getElementById('auraParticles').style.opacity = '0';
+  }
+
+  // name + desc
+  document.getElementById('formName').style.color = form.dotColor;
+  document.getElementById('formName').style.textShadow = `0 0 20px ${form.dotColor}80`;
+  document.getElementById('formName').textContent = form.name;
+  document.getElementById('formDesc').textContent = form.desc;
+
+  // power bar
+  document.getElementById('powerFill').style.width = form.power + '%';
+  document.getElementById('powerFill').style.background = `linear-gradient(90deg, ${form.dotColor}88, ${form.dotColor})`;
+  document.getElementById('powerFill').style.boxShadow = `0 0 10px ${form.dotColor}80`;
+  document.getElementById('powerVal').textContent = form.powerLabel;
+  document.getElementById('powerVal').style.color = form.dotColor;
+
+  // button
+  const btn = document.getElementById('transformBtn');
+  btn.className = 'transform-btn';
+  if (currentChar === 'vegeta') btn.classList.add('vegeta-btn');
+  if (currentForm === char.forms.length - 1) {
+    btn.classList.add('max-btn');
+    btn.textContent = '★ MAXIMUM POWER ★';
+    btn.style.color = currentChar === 'goku' ? '#000' : '#fff';
+  } else {
+    btn.textContent = '⚡ TRANSFORM ⚡';
+    btn.style.color = currentChar === 'goku' ? '#000' : '#fff';
+    // hint
+    const next = char.forms[currentForm + 1];
+    document.getElementById('nextFormHint').textContent = `▶  NEXT: ${next.name}`;
+    document.getElementById('nextFormHint').style.color = next.dotColor + '66';
+  }
+  if (currentForm === char.forms.length - 1) {
+    document.getElementById('nextFormHint').textContent = '— FINAL FORM REACHED —';
+    document.getElementById('nextFormHint').style.color = 'rgba(255,255,255,0.2)';
+  }
+
+  // dots
+  buildDots();
+  // sparks
+  updateSparks(form);
+  // divine overlay
+  if (form.divine) {
+    document.body.style.setProperty('--bg', '#08080f');
+  }
+}
+
+// ─── TRANSFORM ───────────────────────────────────────────────
+function transform() {
+  if (transforming) return;
+  const char = CHARS[currentChar];
+  // cycle
+  currentForm = (currentForm + 1) % char.forms.length;
+  const form = char.forms[currentForm];
+
+  transforming = true;
+  const img = document.getElementById('charImg');
+  const flashEl = document.getElementById('flashOverlay');
+
+  // flash screen
+  flashEl.style.background = form.aura.flash;
+  flashEl.classList.add('flash-active');
+  setTimeout(() => flashEl.classList.remove('flash-active'), 500);
+
+  // flash image out
+  img.classList.remove('flash-in');
+  img.classList.add('flash-out');
+
+  setTimeout(() => {
+    img.classList.remove('flash-out');
+    updateDisplay(true);
+    img.classList.add('flash-in');
+    setTimeout(() => { img.classList.remove('flash-in'); transforming = false; }, 700);
+  }, 200);
+
+  // sparks burst on SSJ2+
+  if (form.sparks) burstSparks(form.aura.r);
+  if (form.divine) divineEffect();
+}
+
+// ─── CHARACTER SELECT ─────────────────────────────────────────
+function selectCharacter(name) {
+  if (currentChar === name) return;
+  currentChar = name;
+  currentForm = 0;
+  document.querySelectorAll('.char-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.char === name);
+  });
+  const flashEl = document.getElementById('flashOverlay');
+  flashEl.style.background = 'rgba(255,255,255,0.8)';
+  flashEl.classList.add('flash-active');
+  setTimeout(() => flashEl.classList.remove('flash-active'), 400);
+  const img = document.getElementById('charImg');
+  img.classList.remove('flash-in');
+  img.classList.add('flash-out');
+  setTimeout(() => {
+    img.classList.remove('flash-out');
+    updateDisplay(false);
+    img.classList.add('flash-in');
+    setTimeout(() => img.classList.remove('flash-in'), 700);
+  }, 180);
+}
+
+// ─── AURA PARTICLES SVG ───────────────────────────────────────
+function updateAuraParticles(color) {
+  const svg = document.getElementById('auraParticles');
+  const lines = [];
+  for (let i = 0; i < 14; i++) {
+    const x = 80 + Math.random() * 240;
+    const y1 = 460;
+    const y2 = 80 + Math.random() * 320;
+    const w = 1 + Math.random() * 2.5;
+    const op = 0.2 + Math.random() * 0.5;
+    const dur = 0.6 + Math.random() * 1.2;
+    const delay = Math.random() * 1.5;
+    lines.push(`
+      <line x1="${x}" y1="${y1}" x2="${x + (Math.random()-0.5)*40}" y2="${y2}"
+        stroke="${color}" stroke-width="${w}" stroke-opacity="${op}"
+        stroke-linecap="round">
+        <animate attributeName="stroke-opacity" values="${op};0;${op}" dur="${dur}s" repeatCount="indefinite" begin="${delay}s"/>
+        <animate attributeName="y2" values="${y2};${y2-30};${y2}" dur="${dur}s" repeatCount="indefinite" begin="${delay}s"/>
+      </line>
+    `);
+  }
+  svg.innerHTML = lines.join('');
+}
+
+// ─── SPARKS CANVAS ────────────────────────────────────────────
+let sparksAnimId = null;
+let sparksActive = false;
+const sparksParticles = [];
+
+function initSparks() {
+  const canvas = document.getElementById('sparksCanvas');
+  canvas.width = canvas.offsetWidth || 500;
+  canvas.height = canvas.offsetHeight || 500;
+}
+
+function updateSparks(form) {
+  const canvas = document.getElementById('sparksCanvas');
+  canvas.style.opacity = form.sparks ? '1' : '0';
+  sparksActive = !!form.sparks;
+  if (sparksActive) {
+    canvas.style.opacity = '1';
+    if (!sparksAnimId) animateSparks();
+  } else {
+    canvas.style.opacity = '0';
+    if (sparksAnimId) { cancelAnimationFrame(sparksAnimId); sparksAnimId = null; }
+    sparksParticles.length = 0;
+  }
+}
+
+function burstSparks(color) {
+  const canvas = document.getElementById('sparksCanvas');
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+  for (let i = 0; i < 18; i++) {
+    sparksParticles.push({
+      x: w * 0.3 + Math.random() * w * 0.4,
+      y: h * 0.2 + Math.random() * h * 0.6,
+      vx: (Math.random() - 0.5) * 8,
+      vy: -2 - Math.random() * 6,
+      life: 1, decay: 0.02 + Math.random() * 0.02,
+      color, size: 2 + Math.random() * 4
+    });
+  }
+  if (!sparksAnimId) animateSparks();
+}
+
+function animateSparks() {
+  const canvas = document.getElementById('sparksCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // spawn if active
+  const form = CHARS[currentChar].forms[currentForm];
+  if (sparksActive && form && Math.random() < 0.4) {
+    sparksParticles.push({
+      x: canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
+      y: canvas.height * 0.3 + Math.random() * canvas.height * 0.5,
+      vx: (Math.random() - 0.5) * 3,
+      vy: -1 - Math.random() * 3,
+      life: 1, decay: 0.03 + Math.random() * 0.03,
+      color: form.aura.r, size: 1.5 + Math.random() * 3
+    });
+  }
+
+  for (let i = sparksParticles.length - 1; i >= 0; i--) {
+    const p = sparksParticles[i];
+    p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+    if (p.life <= 0) { sparksParticles.splice(i, 1); continue; }
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = p.color;
+    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+    ctx.restore();
+  }
+
+  if (sparksParticles.length > 0 || sparksActive) {
+    sparksAnimId = requestAnimationFrame(animateSparks);
+  } else {
+    sparksAnimId = null;
+  }
+}
+
+// ─── DIVINE EFFECT ────────────────────────────────────────────
+function divineEffect() {
+  document.body.style.transition = 'background 1s';
+  document.body.style.background = '#04040c';
+  setTimeout(() => { document.body.style.background = ''; }, 2000);
+}
+
+// ─── BACKGROUND PARTICLES ─────────────────────────────────────
+function initParticles() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const stars = Array.from({ length: 140 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: 0.3 + Math.random() * 1.5,
+    op: 0.1 + Math.random() * 0.5,
+    speed: 0.003 + Math.random() * 0.008,
+    phase: Math.random() * Math.PI * 2
+  }));
+
+  function drawStars(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      const a = s.op * (0.6 + 0.4 * Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawStars);
+  }
+  requestAnimationFrame(drawStars);
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars.forEach(s => { s.x = Math.random() * canvas.width; s.y = Math.random() * canvas.height; });
+  });
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
